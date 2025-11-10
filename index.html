@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CHES PET - Tienda</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="rect-floating-buttons">
+    <button class="rect-btn" id="btnAdminLogin" title="Administrador">
+      <svg width="23" height="23" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#fff" stroke-width="2" fill="none"></circle><path d="M4 20c0-3.6 16-3.6 16 0" stroke="#fff" stroke-width="2" fill="none"></path></svg>
+    </button>
+    <button class="rect-btn" id="cartBtn" title="Carrito">
+      <svg width="24" height="24" viewBox="0 0 24 24"><path d="M7 20c.8 0 1.5.7 1.5 1.5S7.8 23 7 23s-1.5-.7-1.5-1.5S6.2 20 7 20m10 0c.8 0 1.5.7 1.5 1.5S17.8 23 17 23s-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M6 17h10a2 2 0 0 0 2-2V7H4v8a2 2 0 0 0 2 2z" fill="#fff"></path></svg>
+      <span id="cartBadge" class="cart-rect-badge" style="display:none"></span>
+    </button>
+  </div>
+  <div id="cartPanel" class="cart-panel-oculto">
+    <div class="cart-header">
+      <span>Tu lista de compras</span>
+      <button id="cerrarCartPanel" class="close-btn">&times;</button>
+    </div>
+    <div id="cartProducts" class="cart-items-list"></div>
+    <div class="cart-bottom">
+      <div class="cart-minimo">Pedido mínimo: <span style="color:#3074DB;">$40.000</span></div>
+      <div class="cart-subtotal-row">
+        <span>Subtotal</span>
+        <span id="cartSubTotal" class="cart-subtotal"></span>
+      </div>
+      <button id="cartGoPay" class="cart-pay-btn">CONTINUAR AL CARRITO</button>
+      <button id="cartVolverComprar" class="cart-volver-btn">&#8630; Volver y seguir comprando</button>
+    </div>
+  </div>
+  <div id="cartPanelOverlay" class="cart-overlay"></div>
+  <div id="loginModal" class="modal-login-blur">
+    <div class="modal-login-panel">
+      <span class="cerrar-login">&times;</span>
+      <svg width="44" height="44" viewBox="0 0 24 24" style="margin: 0 auto 9px;"><circle cx="12" cy="8" r="4" stroke="#3074DB" stroke-width="2.2" fill="none"></circle><path d="M4 20c0-3.6 16-3.6 16 0" stroke="#3074DB" stroke-width="2.1" fill="none"></path></svg>
+      <h2>Acceso Administrador</h2>
+      <form id="formLogin" autocomplete="off">
+        <div class="login-row">
+          <input type="text" id="usuario" placeholder="Usuario" required autocomplete="username" />
+          <input type="password" id="clave" placeholder="Contraseña" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn-blue">Entrar</button>
+      </form>
+      <p id="errorLogin" class="error" style="display:none;">Usuario o contraseña incorrectos</p>
+    </div>
+  </div>
+  <main id="mainContent">
+    <header>
+      <h1>CHES PET</h1>
+      <nav><ul><li><a href="#" id="menu-cliente">Catálogo</a></li></ul></nav>
+    </header>
+    <div id="panel-cliente">
+      <section id="catalogo">
+        <h2>Catálogo</h2>
+        <div id="productos-lista"></div>
+      </section>
+    </div>
+    <div id="panel-admin" style="display:none;">
+      <section id="admin">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2>Panel de Administración CHES PET</h2>
+          <button id="btnLogoutAdmin" class="logout-btn">Cerrar sesión</button>
+        </div>
+        <div id="importExcelArea">
+          <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;" />
+          <label for="excelInput" class="import-excel-btn">Importar productos masivamente (.xlsx/.csv)</label>
+          <span id="importMessage"></span>
+        </div>
+        <div id="listaAdmin">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Stock</th>
+                <th>Precio</th>
+                <th>% de descuento</th>
+                <th>Categoría</th>
+                <th>Marca</th>
+                <th>SKU</th>
+                <th>Valor con descuento</th>
+                <th>Opciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-tbody"></tbody>
+          </table>
+          <button id="btnAgregar">Agregar Nuevo Producto</button>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="modalEditar" class="modal-edit">
+    <div class="modal-edit-content">
+      <span class="cerrar-editar">&times;</span>
+      <h2>Editar producto</h2>
+      <form id="formEditarProducto" autocomplete="off">
+        <div class="modal-edit-group">
+          <label>Imagen URL:</label>
+          <input type="text" id="editImagen" required />
+          <img id="editPreviewImg" src="" alt="Preview" />
+        </div>
+        <div class="modal-edit-row">
+          <div>
+            <label>Nombre:</label>
+            <input type="text" id="editNombre" required />
+          </div>
+        </div>
+        <label>Descripción:</label>
+        <textarea id="editDescripcion" rows="4" required></textarea>
+        <div class="modal-edit-row">
+          <div>
+            <label>Stock:</label>
+            <input type="number" id="editStock" min="0" required />
+          </div>
+          <div>
+            <label>Precio:</label>
+            <input type="number" id="editPrecio" min="1" required />
+          </div>
+        </div>
+        <div class="modal-edit-row">
+          <div>
+            <label>% de descuento:</label>
+            <input type="number" id="editDescuento" min="0" max="100" />
+          </div>
+          <div>
+            <label>Categoría:</label>
+            <input type="text" id="editCategoria" />
+          </div>
+        </div>
+        <div class="modal-edit-row">
+          <div>
+            <label>Marca:</label>
+            <input type="text" id="editMarca" />
+          </div>
+          <div>
+            <label>SKU:</label>
+            <input type="text" id="editSKU" />
+          </div>
+        </div>
+        <div class="modal-edit-bottom-row">
+          <label>Valor con descuento:</label>
+          <input type="text" id="editValorDescuento" readonly />
+        </div>
+        <button type="submit">Guardar</button>
+      </form>
+    </div>
+  </div>
+  <div id="modalDescripcion" class="modal">
+    <div class="modal-content">
+      <span class="cerrar">&times;</span>
+      <h3 id="modalNombre"></h3>
+      <img id="modalImagen" class="modal-big-img" />
+      <p id="modalDescripcionTexto"></p>
+      <p><strong>Precio:</strong> $<span id="modalPrecio"></span></p>
+      <p><strong>Stock disponible:</strong> <span id="modalStock"></span></p>
+      <div id="modalAgregarArea">
+        <label>Cantidad: <input type="number" id="modalCantidad" min="1" value="1" /></label>
+        <button id="modalAgregarBtn">Agregar al carrito</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
